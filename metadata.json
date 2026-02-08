@@ -1,0 +1,7 @@
+{
+  "name": "UniLink - College Management System",
+  "description": "A high-end university portal for assignment management with real-time updates and AI-assisted faculty feedback.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
