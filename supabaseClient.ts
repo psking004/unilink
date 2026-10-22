@@ -1,17 +1,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const getEnv = (key: string): string | undefined => {
-  try {
-    // @ts-ignore
-    return (typeof process !== 'undefined' && process.env) ? process.env[key] : undefined;
-  } catch (e) {
-    return undefined;
-  }
-};
-
-const supabaseUrl = getEnv('SUPABASE_URL');
-const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
+// Injected at build time by vite.config.ts (from VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY,
+// or SUPABASE_URL / SUPABASE_ANON_KEY). Empty values fall back to the local mock client.
+const supabaseUrl: string | undefined = process.env.SUPABASE_URL || undefined;
+const supabaseAnonKey: string | undefined = process.env.SUPABASE_ANON_KEY || undefined;
 const isRealConfig = supabaseUrl && !supabaseUrl.includes('placeholder') && supabaseAnonKey && supabaseAnonKey !== 'placeholder-key';
 
 // Global singleton mock store
