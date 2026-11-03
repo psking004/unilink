@@ -1,28 +1,32 @@
+// AI feedback for faculty reviews.
+// The Gemini API key never reaches the browser: this calls the FastAPI backend,
+// which holds GEMINI_API_KEY and talks to Gemini server-side (POST /ai/feedback).
 
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+const API_URL: string = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 
-export const getAIFeedback = async (assignmentTitle: string, assignmentDesc: string, submissionInfo: string) => {
+const FALLBACK_FEEDBACK =
+  'Great effort on this assignment. Continue focusing on the core concepts discussed in class.';
+
+export const getAIFeedback = async (
+  assignmentTitle: string,
+  assignmentDesc: string,
+  submissionInfo: string
+): Promise<string> => {
   try {
-    // Initializing Gemini client inside the function to ensure fresh state/API key
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `You are an expert academic tutor. A student has submitted work for the assignment "${assignmentTitle}".
-      Assignment Description: ${assignmentDesc}
-      Submission Context: ${submissionInfo}
-      
-      Generate a professional, constructive, and helpful feedback message for the student. 
-      Limit to 3-4 sentences. Mention what they likely did well and where they can improve.`,
-      config: {
-        temperature: 0.7,
-        topP: 0.9,
-      },
+    const res = await fetch(`${API_URL}/ai/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assignment_title: assignmentTitle,
+        assignment_description: assignmentDesc,
+        submission_info: submissionInfo,
+      }),
     });
-
-    // Directly access the text property as per the latest SDK guidelines
-    return response.text || "Great effort on this assignment. I have reviewed your work.";
+    if (!res.ok) throw new Error(`AI feedback request failed (${res.status})`);
+    const data: { feedback?: string } = await res.json();
+    return data.feedback || FALLBACK_FEEDBACK;
   } catch (error) {
-    console.error("Gemini AI Feedback Error:", error);
-    return "Great effort on this assignment. Continue focusing on the core concepts discussed in class.";
+    console.error('AI feedback error:', error);
+    return FALLBACK_FEEDBACK;
   }
 };
